@@ -4,7 +4,7 @@
 
 ### Students
 * [David Crittin](mailto:david.crittin@students.hevs.ch)
-* [Mickael Logean](mailto:sylvain.meyer@students.hevs.ch)
+* [Sylvain Meyer](mailto:sylvain.meyer@students.hevs.ch)
 
 ### Professor
 * [Jean-Luc Beuchat](mailto:jean-luc.beuchat@hevs.ch)
