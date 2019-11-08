@@ -37,16 +37,14 @@ class ShamirSecretSharingTest {
 
     @Test
     void validateInverseMultiplicatif() throws Exception {
-
-        BigInteger m = BigInteger.probablePrime(ShamirSecretSharing.BIT_LENGTH, new SecureRandom());
-        //BigInteger m = new BigInteger(String.valueOf(59));
-        int a = 12;
-        BigInteger biA = new BigInteger(String.valueOf(a));
-        BigInteger biM = new BigInteger(String.valueOf(m));
-        BigInteger biC = biA.modInverse(biM);
-
         ShamirSecretSharing shamir = new ShamirSecretSharing(3, 2);
-        assertEquals(biC, shamir.modInverseBigInt(m, new BigInteger(String.valueOf(a))));
+        BigInteger m = BigInteger.probablePrime(ShamirSecretSharing.BIT_LENGTH, new SecureRandom());
+
+        for (BigInteger i = BigInteger.ONE; i.compareTo(m) < 0; i = i.nextProbablePrime().multiply(i)) {
+            System.out.println(i);
+            BigInteger biC = i.modInverse(m);
+            assertEquals(biC, shamir.modInverseBigInt(m, i));
+        }
     }
 
 }

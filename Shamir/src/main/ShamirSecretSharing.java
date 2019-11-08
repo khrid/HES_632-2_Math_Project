@@ -7,7 +7,7 @@ class ShamirSecretSharing {
     *
     // 1 générer le S avec biginteger
     // 2 aller chercher le nombre premier avec nextprime du s ( p-1 )
-    // 3 générer les coefficiens du polynome
+    // 3 générer les coefficients du polynome
     // retourner les n parts du secret
     // stocker le nombre de parts du secret
     // stocker le p (step 2)
@@ -17,7 +17,7 @@ class ShamirSecretSharing {
 
     private int shares;
     private int treshold;
-    private BigInteger secret;
+    private BigInteger s;
     private BigInteger nextPrime;
 
     public ShamirSecretSharing(int shares, int treshold) throws Exception {
@@ -29,10 +29,10 @@ class ShamirSecretSharing {
             throw new Exception();
         }
 
-        this.secret = BigInteger.probablePrime(BIT_LENGTH, new SecureRandom());
+        this.s = BigInteger.probablePrime(BIT_LENGTH, new SecureRandom());
         this.treshold = treshold;
         this.shares = shares;
-        this.nextPrime = secret.nextProbablePrime();
+        this.nextPrime = s.nextProbablePrime();
     }
 
 
@@ -59,16 +59,16 @@ class ShamirSecretSharing {
         yList.add(0, BigInteger.ZERO);
         yList.add(1, BigInteger.ONE);
 
+
         int i = 0;
-        while (!rList.get(i + 1).equals(BigInteger.ZERO)) {
+        while (!BigInteger.ZERO.equals(rList.get(i + 1))) {
             i++;
             qList.add(i, rList.get(i - 1).divide(rList.get(i)));
             rList.add(i + 1, rList.get(i - 1).subtract(qList.get(i).multiply(rList.get(i))));
             xList.add(i + 1, xList.get(i - 1).subtract(qList.get(i).multiply(xList.get(i))));
             yList.add(i + 1, yList.get(i - 1).subtract(qList.get(i).multiply(yList.get(i))));
         }
-
-        return yList.get(i);
+        return yList.get(i).mod(rList.get(0));
     }
 }
 
