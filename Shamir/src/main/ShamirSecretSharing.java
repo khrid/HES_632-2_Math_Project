@@ -1,4 +1,9 @@
+import org.json.simple.JSONObject;
+
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 
@@ -13,12 +18,16 @@ class ShamirSecretSharing {
     // stocker le p (step 2)
 
     // s + a1x + a2x^2 => générer aléatoirement a1 et x2 compris entre 1 et p-1*/
-    static final int BIT_LENGTH = 256;
+    static final int BIT_LENGTH = 32;
 
     private int shares;
     private int treshold;
     private BigInteger s;
-    private BigInteger nextPrime;
+    private BigInteger p;
+    private BigInteger[] pol;
+    private BigInteger[] fDeX;
+
+    private JSONObject json = new JSONObject();
 
     public ShamirSecretSharing(int shares, int treshold) throws Exception {
 
@@ -32,7 +41,25 @@ class ShamirSecretSharing {
         this.s = BigInteger.probablePrime(BIT_LENGTH, new SecureRandom());
         this.treshold = treshold;
         this.shares = shares;
-        this.nextPrime = s.nextProbablePrime();
+        this.p = s.nextProbablePrime();
+
+        pol = new BigInteger[shares];
+        fDeX = new BigInteger[shares];
+
+        try {
+            json.put("shares", shares);
+            json.put("treshold", treshold);
+            json.put("p", p);
+            json.put("s", s);
+            Files.write(Paths.get("C:\\tmp\\shamir\\metadata.json"), json.toJSONString().getBytes());
+        }
+        catch (Exception e) {
+
+        }
+    }
+
+    public BigInteger getSecret() {
+        return s;
     }
 
 
@@ -42,6 +69,46 @@ class ShamirSecretSharing {
 
     public int getTreshold() {
         return treshold;
+    }
+
+    public void generate() {
+        for (int i = 0; i < shares; i++) {
+            BigInteger randomNumber;
+            do {
+                randomNumber = new BigInteger(p.bitLength(), new SecureRandom());
+            } while (randomNumber.compareTo(p) >= 0);
+            pol[i] = randomNumber;
+        }
+
+
+        for (int i = 0; i < pol.length; i++) {
+            //System.out.println(pol[i]);
+        }
+        //System.out.println();
+    }
+
+    public BigInteger f_de_x(BigInteger x) {
+        int i = shares-1;
+        BigInteger res = BigInteger.ZERO;
+        BigInteger base = pol[i];
+        while (i > 0) {
+            //System.out.println(base);
+            res = base.multiply(x).add(pol[i-1]);
+            base = res;
+            i--;
+        }
+        try {
+            json.put(x, x+":"+res);
+            fDeX[x.intValue()] = res;
+            Files.write(Paths.get("C:\\tmp\\shamir\\metadata.json"), json.toJSONString().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    public BigInteger[] getfDeX() {
+        return fDeX;
     }
 
     public BigInteger modInverseBigInt(BigInteger a, BigInteger b) {
