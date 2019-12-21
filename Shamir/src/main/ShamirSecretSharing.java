@@ -1,5 +1,7 @@
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -18,10 +20,9 @@ class ShamirSecretSharing {
     // stocker le p (step 2)
 
     // s + a1x + a2x^2 => générer aléatoirement a1 et x2 compris entre 1 et p-1*/
-    static final int BIT_LENGTH = 32;
-
     private int shares;
     private int treshold;
+    private int bit_length;
     private BigInteger s;
     private BigInteger p;
     private BigInteger[] pol;
@@ -29,39 +30,14 @@ class ShamirSecretSharing {
 
     private JSONObject json = new JSONObject();
 
-    public ShamirSecretSharing(int shares, int treshold) throws Exception {
+    public ShamirSecretSharing() throws Exception {
 
-        if (shares <= 1) {
-            throw new Exception();
-        }
-        if (treshold >= shares) {
-            throw new Exception();
-        }
-
-        this.s = BigInteger.probablePrime(BIT_LENGTH, new SecureRandom());
-        this.treshold = treshold;
-        this.shares = shares;
-        this.p = s.nextProbablePrime();
-
-        pol = new BigInteger[shares];
-        fDeX = new BigInteger[shares];
-
-        try {
-            json.put("shares", shares);
-            json.put("treshold", treshold);
-            json.put("p", p);
-            json.put("s", s);
-            Files.write(Paths.get("C:\\tmp\\shamir\\metadata.json"), json.toJSONString().getBytes());
-        }
-        catch (Exception e) {
-
-        }
     }
+
 
     public BigInteger getSecret() {
         return s;
     }
-
 
     public int getShares() {
         return shares;
@@ -71,7 +47,68 @@ class ShamirSecretSharing {
         return treshold;
     }
 
-    public void generate() {
+    public int getBitLength() {
+        return bit_length;
+    }
+
+    public void generateNewSecret(int shares, int treshold, int bit_length) throws Exception {
+
+        if (shares <= 1) {
+            throw new Exception();
+        }
+        if (treshold >= shares) {
+            throw new Exception();
+        }
+        if (bit_length < 32 || bit_length > 4096) {
+            throw new Exception();
+        }
+
+        this.bit_length=bit_length;
+        this.s = BigInteger.probablePrime(bit_length, new SecureRandom());
+        this.treshold = treshold;
+        this.shares = shares;
+        this.p = s.nextProbablePrime();
+
+        generateSecret();
+    }
+
+    public void generateNewShare() throws Exception {
+
+        JSONParser parser = new JSONParser();
+        try {
+
+            Object obj = parser.parse(new FileReader("C:\\tmp\\shamir\\metadata.json"));
+            json = (JSONObject) obj;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
+        bit_length=Integer.parseInt(json.get("l").toString());
+        treshold = Integer.parseInt(json.get("treshold").toString());
+        shares = Integer.parseInt(json.get("shares").toString())+1;
+        s = BigInteger.probablePrime(bit_length, new SecureRandom());
+        p = s.nextProbablePrime();
+
+        generateSecret();
+    }
+
+    private void generateSecret() {
+        pol = new BigInteger[shares];
+        fDeX = new BigInteger[shares];
+
+        try {
+            json.put("shares", shares);
+            json.put("treshold", treshold);
+            json.put("p", p);
+            json.put("s", s);
+            json.put("l", bit_length);
+            Files.write(Paths.get("C:\\tmp\\shamir\\metadata.json"), json.toJSONString().getBytes());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
         for (int i = 0; i < shares; i++) {
             BigInteger randomNumber;
             do {
@@ -79,7 +116,6 @@ class ShamirSecretSharing {
             } while (randomNumber.compareTo(p) >= 0);
             pol[i] = randomNumber;
         }
-
 
         for (int i = 0; i < pol.length; i++) {
             //System.out.println(pol[i]);
